@@ -28,5 +28,5 @@ data "aws_availability_zones" "available" {
 
 locals {
   availability_zones = slice(data.aws_availability_zones.available.names, 0, 2)
-  name_prefix         = substr("${var.project_name}-${var.environment}", 0, 32)
+  name_prefix        = substr("${var.project_name}-${var.environment}", 0, 32)
 }

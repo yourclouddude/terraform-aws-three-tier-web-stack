@@ -11,8 +11,8 @@ resource "aws_db_instance" "this" {
   identifier = substr("${var.name_prefix}-postgres", 0, 63)
 
   allocated_storage = 20
-  storage_type      = "gp3"
-  storage_encrypted = true
+  storage_type       = "gp3"
+  storage_encrypted  = true
 
   engine         = "postgres"
   engine_version = "16"
@@ -29,13 +29,13 @@ resource "aws_db_instance" "this" {
   publicly_accessible    = false
   multi_az               = false
 
-  backup_retention_period = 1
+  backup_retention_period    = 1
   auto_minor_version_upgrade = true
-  copy_tags_to_snapshot       = true
+  copy_tags_to_snapshot      = true
 
   deletion_protection = false
-  skip_final_snapshot  = true
-  apply_immediately    = true
+  skip_final_snapshot = true
+  apply_immediately   = true
 
   performance_insights_enabled = false
 

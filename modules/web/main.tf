@@ -102,14 +102,14 @@ resource "aws_launch_template" "app" {
 }
 
 resource "aws_autoscaling_group" "app" {
-  name_prefix         = "${var.name_prefix}-app-"
-  desired_capacity    = var.desired_capacity
+  name_prefix               = "${var.name_prefix}-app-"
+  desired_capacity          = var.desired_capacity
   health_check_grace_period = 120
-  health_check_type   = "ELB"
-  max_size            = 4
-  min_size            = 1
-  target_group_arns   = [aws_lb_target_group.app.arn]
-  vpc_zone_identifier = var.app_subnet_ids
+  health_check_type         = "ELB"
+  max_size                  = 4
+  min_size                  = 1
+  target_group_arns         = [aws_lb_target_group.app.arn]
+  vpc_zone_identifier       = var.app_subnet_ids
 
   launch_template {
     id      = aws_launch_template.app.id
