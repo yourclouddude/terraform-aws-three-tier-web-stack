@@ -1,0 +1,38 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      TF_IN_AUTOMATION: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive
+
+      - name: Initialize without a remote backend
+        run: terraform init -backend=false -input=false
+
+      - name: Validate configuration
+        run: terraform validate
+
+      - name: Check repository security guardrails
+        run: bash scripts/security_guardrails.sh

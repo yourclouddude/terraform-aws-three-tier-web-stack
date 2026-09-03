@@ -18,8 +18,6 @@ The interesting part is not the number of AWS services. It is the network bounda
 - There is no SSH ingress rule.
 - The base stack has no NAT gateway, so the private application tier does not quietly depend on internet egress.
 
-The repository uses the **YourCloudDude** brand only and is intended as a learner-first infrastructure project.
-
 ## Architecture
 
 ```mermaid
@@ -31,7 +29,8 @@ flowchart LR
         APP --> DB[("Private RDS PostgreSQL")]
     end
 
-    ALB -. "CloudWatch metrics" .-> CW["CloudWatch alarms"]
+    DB -. "RDS-managed master secret" .-> SM["Secrets Manager"]
+    ALB -. "target health" .-> CW["CloudWatch alarm"]
 ```
 
 The network module creates separate public, application, and database subnets across two Availability Zones. Only the ALB uses the public subnets. The EC2 and RDS tiers stay in private subnets with no default route to the internet.
@@ -52,23 +51,23 @@ The `/health` endpoint checks whether the web process itself is alive. The main 
 
 Those are deliberately different checks. A temporary database problem should not make the load balancer immediately treat a healthy web process as dead.
 
-The demo does **not** authenticate to PostgreSQL. That is intentional: putting database credentials in EC2 user data would be a bad shortcut. A useful next step is to add AWS Secrets Manager or another deliberate secret-delivery design, then make the application perform a real SQL query.
+The demo does **not** authenticate to PostgreSQL. RDS manages the master password in Secrets Manager, and that credential is not copied into user data or source code. A useful next step is to give the application a narrowly scoped IAM role that can read one secret and then make a real SQL query.
 
 ## Security boundaries worth noticing
 
 The Terraform code is intentionally restrictive:
 
 - EC2 instances receive no public IP addresses.
-- No security group opens port 22.
-- ALB ingress is the only `0.0.0.0/0` rule in the Terraform configuration.
+- no security group opens port 22.
+- ALB ingress is the only internet-wide security-group rule.
 - ALB egress is limited to the application security group on port 8080.
 - application egress is limited to PostgreSQL plus VPC DNS.
 - RDS accepts PostgreSQL traffic only from the application security group.
 - RDS storage and EC2 root volumes are encrypted.
 - the launch template requires IMDSv2.
-- the database password is a sensitive Terraform variable and is never stored in this repository.
+- the RDS master password is AWS-managed instead of being stored in a Terraform variable.
 
-Terraform state can still contain sensitive values. Do not commit state files. For shared environments, configure a protected remote backend before applying the stack.
+Terraform state can still contain sensitive infrastructure data. Do not commit state files. For shared environments, configure a protected remote backend before applying the stack.
 
 ## Repository layout
 
@@ -84,6 +83,7 @@ Terraform state can still contain sensitive values. Do not commit state files. F
 │   └── web/
 ├── scripts/
 │   └── security_guardrails.sh
+├── backend.tf.example
 ├── main.tf
 ├── outputs.tf
 ├── security.tf
@@ -98,20 +98,14 @@ You need:
 
 - Terraform 1.7+
 - an AWS account and credentials you control
-- permission to create VPC, EC2, Auto Scaling, ELBv2, RDS, security-group, and CloudWatch resources
+- permission to create VPC, EC2, Auto Scaling, ELBv2, RDS, Secrets Manager-managed RDS credentials, security-group, and CloudWatch resources
 
-This stack creates **billable resources**. The ALB, EC2 instances, and RDS instance are the main things to watch. There is no NAT gateway in the base design, but that does not make the stack free.
+This stack creates **billable resources**. The ALB, EC2 instances, RDS instance/storage, CloudWatch alarm, and managed database secret are the main things to review. There is no NAT gateway in the base design, but that does not make the stack free.
 
 Start with the example variables:
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
-```
-
-Set the database password through your shell rather than writing it into the committed example file:
-
-```bash
-export TF_VAR_db_password='use-a-long-unique-password-here'
 ```
 
 Then run:
@@ -137,7 +131,7 @@ terraform validate
 bash scripts/security_guardrails.sh
 ```
 
-The repository-specific guardrail script checks the assumptions this project cares about: no public EC2 IPs, no public RDS, no SSH ingress, exactly one internet-wide CIDR rule, IMDSv2 enforcement, and encrypted RDS storage.
+The repository-specific guardrail script checks the assumptions this project cares about: no public EC2 IPs, no public RDS, no SSH ingress, exactly one internet-wide security-group rule, IMDSv2 enforcement, encrypted RDS storage, and AWS-managed database credentials.
 
 It is intentionally not described as a complete security audit.
 
@@ -147,7 +141,7 @@ It is intentionally not described as a complete security audit.
 
 **Break the app-to-database rule.** Change the PostgreSQL security-group path. The ALB can still report healthy web targets while the page reports that the database network path is unavailable.
 
-**Add real database access.** Introduce secret delivery and a SQL client without placing credentials in user data, source code, or Git-tracked variable files.
+**Add real database access.** Give the EC2 application a narrowly scoped IAM role, read the RDS-managed secret at runtime, and make a SQL query without copying credentials into user data or the repository.
 
 **Add controlled private-instance management.** Compare NAT egress with Systems Manager VPC endpoints and document the cost and operational difference.
 
@@ -161,7 +155,6 @@ This is not presented as a complete production platform. In particular, the base
 - HTTPS or a custom domain
 - WAF
 - remote Terraform state configured for you
-- Secrets Manager integration
 - application-level SQL authentication
 - SSM access to the private instances
 - centralized application logs
@@ -177,9 +170,9 @@ When you are finished:
 terraform destroy
 ```
 
-Review the plan before approving destruction. The learning configuration uses an RDS setup that is easy to destroy and does not pretend to be a production data-retention policy.
+Review the plan before approving destruction. The learning configuration intentionally uses `skip_final_snapshot = true` and no deletion protection so the stack can be removed cleanly. That is a learning-environment choice, not a production data-retention policy.
 
-For deeper reasoning, see [`docs/architecture.md`](docs/architecture.md) once the implementation files are in place. Common failure modes live in [`docs/troubleshooting.md`](docs/troubleshooting.md).
+For deeper reasoning, see [`docs/architecture.md`](docs/architecture.md). Common failure modes live in [`docs/troubleshooting.md`](docs/troubleshooting.md).
 
 ## YourCloudDude
 
