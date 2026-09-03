@@ -11,8 +11,8 @@ resource "aws_db_instance" "this" {
   identifier = substr("${var.name_prefix}-postgres", 0, 63)
 
   allocated_storage = 20
-  storage_type       = "gp3"
-  storage_encrypted  = true
+  storage_type      = "gp3"
+  storage_encrypted = true
 
   engine         = "postgres"
   engine_version = "16"
