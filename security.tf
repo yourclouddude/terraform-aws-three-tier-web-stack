@@ -73,22 +73,22 @@ resource "aws_vpc_security_group_egress_rule" "app_to_database" {
 
 resource "aws_vpc_security_group_egress_rule" "app_dns_udp" {
   security_group_id = aws_security_group.app.id
-  cidr_ipv4         = var.vpc_cidr
+  cidr_ipv4         = "${cidrhost(var.vpc_cidr, 2)}/32"
   from_port         = 53
   ip_protocol       = "udp"
   to_port           = 53
 
-  description = "VPC DNS lookups over UDP"
+  description = "VPC resolver lookups over UDP"
 }
 
 resource "aws_vpc_security_group_egress_rule" "app_dns_tcp" {
   security_group_id = aws_security_group.app.id
-  cidr_ipv4         = var.vpc_cidr
+  cidr_ipv4         = "${cidrhost(var.vpc_cidr, 2)}/32"
   from_port         = 53
   ip_protocol       = "tcp"
   to_port           = 53
 
-  description = "VPC DNS lookups over TCP"
+  description = "VPC resolver lookups over TCP"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "database_from_app" {

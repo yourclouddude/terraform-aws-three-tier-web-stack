@@ -8,7 +8,7 @@ The public boundary is the Application Load Balancer. Its security group accepts
 
 The ALB can send traffic only to the application security group on port 8080. The EC2 instances sit in private application subnets and do not receive public IP addresses.
 
-The application security group can reach PostgreSQL on port 5432 and can use DNS inside the VPC. It has no general internet egress rule.
+The application security group can reach PostgreSQL on port 5432 and can send DNS queries only to the VPC resolver address on port 53 over TCP or UDP. For the primary VPC CIDR, that resolver is the network base plus two, so the Terraform rules derive a single `/32` with `cidrhost(var.vpc_cidr, 2)` instead of opening port 53 to the whole VPC range. The application tier still has no general internet egress rule.
 
 RDS sits in separate database subnets and accepts PostgreSQL traffic only from the application security group. `publicly_accessible` is disabled.
 
@@ -82,6 +82,7 @@ A few changes are especially useful because the failure is easy to reason about:
 
 - remove ALB egress to the app tier and inspect target health
 - remove app ingress from the ALB and compare the symptom
+- remove app DNS egress and observe that the RDS hostname can no longer resolve even though the PostgreSQL security-group path still exists
 - remove app egress to PostgreSQL and watch the main page report the database path as unavailable while `/health` stays green
 - reduce desired capacity to one and discuss the difference between a multi-AZ network and a multi-instance application
 - enable Multi-AZ RDS and compare the Terraform plan and monthly cost drivers
