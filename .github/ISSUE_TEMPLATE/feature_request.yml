@@ -1,0 +1,41 @@
+name: Feature request
+description: Propose an improvement to the Terraform AWS three-tier stack
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or learning goal
+      description: What infrastructure limitation or engineering question should this feature address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+      description: Describe the smallest useful infrastructure change.
+    validations:
+      required: true
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Trade-offs
+      description: What changes in cost, network exposure, availability, state, IAM, operability, or replacement risk?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - VPC / networking
+        - ALB / ingress
+        - EC2 / Auto Scaling
+        - RDS / database
+        - IAM / secrets
+        - Security groups / guardrails
+        - Terraform state / workflow
+        - Observability / operations
+        - Documentation / learning experience
+    validations:
+      required: true
