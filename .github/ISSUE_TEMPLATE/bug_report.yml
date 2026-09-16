@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible problem in the Terraform AWS three-tier stack
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Do not include AWS credentials, Terraform state, plan files containing secrets, or other sensitive data.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the Terraform command and the smallest configuration change needed to reproduce the issue.
+      placeholder: |
+        1. Run terraform init ...
+        2. Run terraform plan/apply ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Terraform version, AWS provider version, AWS Region, and OS.
+      placeholder: "Terraform 1.x, AWS provider 5.x, us-east-1, Linux"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Redact account IDs, ARNs if sensitive, credentials, state contents, and secrets.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I removed credentials, state contents, tokens, and other secrets from this report.
+          required: true
+        - label: I checked the existing issues before opening this one.
+          required: true
